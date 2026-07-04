@@ -167,475 +167,512 @@
         .section-hidden {
             display: none !important;
         }
+
+        /* Status Bar */
+        .status-bar {
+            background: white;
+            padding: 8px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            gap: 16px;
+            font-size: 0.875rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-online { color: #22c55e; }
+        .status-offline { color: #ef4444; }
+        .status-syncing { color: #f59e0b; }
     </style>
 </head>
-<body class="h-screen overflow-hidden flex">
+<body class="h-screen overflow-hidden flex flex-col">
 
-    <!-- Sidebar -->
-    <aside class="sidebar w-64 text-white flex flex-col shadow-2xl">
-        <div class="p-6 border-b border-green-700">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-landmark text-2xl"></i>
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">وزارة الشباب<br>والرياضة</h1>
-                    <p class="text-xs text-green-200 mt-1">نظام الكتب الرسمية</p>
-                </div>
-            </div>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item" id="connection-status">
+            <i class="fas fa-circle status-online"></i>
+            <span>متصل</span>
         </div>
-
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-            <div onclick="showSection('dashboard')" id="nav-dashboard" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3 active">
-                <i class="fas fa-home w-5"></i>
-                <span>الرئيسية</span>
-            </div>
-
-            <div onclick="showSection('outgoing')" id="nav-outgoing" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
-                <i class="fas fa-paper-plane w-5"></i>
-                <span>الكتب الصادرة</span>
-            </div>
-
-            <div onclick="showSection('incoming')" id="nav-incoming" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
-                <i class="fas fa-inbox w-5"></i>
-                <span>الكتب الواردة</span>
-            </div>
-
-            <div onclick="showSection('messaging')" id="nav-messaging" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3 relative">
-                <i class="fas fa-comments w-5"></i>
-                <span>التواصل الداخلي</span>
-                <span id="msg-badge" class="notification-dot hidden"></span>
-            </div>
-
-            <div onclick="showSection('departments')" id="nav-departments" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
-                <i class="fas fa-building w-5"></i>
-                <span>الدوائر والأقسام</span>
-            </div>
-
-            <div onclick="showSection('search')" id="nav-search" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
-                <i class="fas fa-search w-5"></i>
-                <span>البحث والتقارير</span>
-            </div>
-        </nav>
-
-        <div class="p-4 border-t border-green-700">
-            <div class="flex items-center gap-3 px-4 py-2">
-                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
-                    مد
-                </div>
-                <div class="flex-1">
-                    <p class="font-semibold text-sm">مدير النظام</p>
-                    <p class="text-xs text-green-200">قسم التصاريح</p>
-                </div>
-            </div>
+        <div class="status-item" id="sync-status">
+            <i class="fas fa-check-circle status-online"></i>
+            <span>مزامنة نشطة</span>
         </div>
-    </aside>
+        <div class="status-item" id="queue-status">
+            <span>قائمة الانتظار: <strong id="queue-count">0</strong></span>
+        </div>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-
-        <!-- Top Header -->
-        <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-            <h2 id="page-title" class="text-2xl font-bold text-gray-800">الرئيسية</h2>
-
-            <div class="flex items-center gap-4">
-                <div onclick="showSection('messaging')" class="relative p-2 text-gray-600 hover:text-green-700 transition cursor-pointer">
-                    <i class="fas fa-bell text-xl"></i>
-                    <span id="notif-badge" class="notification-dot hidden"></span>
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 text-white flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-green-700">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-landmark text-2xl"></i>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">وزارة الشباب<br>والرياضة</h1>
+                        <p class="text-xs text-green-200 mt-1">نظام الكتب الرسمية</p>
+                    </div>
                 </div>
-                <div class="text-sm text-gray-500" id="current-date"></div>
             </div>
-        </header>
 
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto p-6" id="content-area">
-
-            <!-- Dashboard Section -->
-            <section id="dashboard-section" class="fade-in space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-green-600 cursor-pointer" onclick="showSection('outgoing')">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">إجمالي الكتب</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="total-books">0</p>
-                            </div>
-                            <div class="bg-green-100 p-3 rounded-lg text-green-600">
-                                <i class="fas fa-folder-open text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-blue-600 cursor-pointer" onclick="showSection('outgoing')">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">الصادرة</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="total-outgoing">0</p>
-                            </div>
-                            <div class="bg-blue-100 p-3 rounded-lg text-blue-600">
-                                <i class="fas fa-paper-plane text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-orange-600 cursor-pointer" onclick="showSection('incoming')">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">الواردة</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="total-incoming">0</p>
-                            </div>
-                            <div class="bg-orange-100 p-3 rounded-lg text-orange-600">
-                                <i class="fas fa-inbox text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-purple-600 cursor-pointer" onclick="showSection('messaging')">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-gray-500 text-sm">الرسائل الجديدة</p>
-                                <p class="text-3xl font-bold text-gray-800 mt-1" id="total-messages">0</p>
-                            </div>
-                            <div class="bg-purple-100 p-3 rounded-lg text-purple-600">
-                                <i class="fas fa-envelope text-xl"></i>
-                            </div>
-                        </div>
-                    </div>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                <div onclick="showSection('dashboard')" id="nav-dashboard" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3 active">
+                    <i class="fas fa-home w-5"></i>
+                    <span>الرئيسية</span>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                            <i class="fas fa-clock text-green-600"></i>
-                            آخر النشاطات
-                        </h3>
-                        <div id="recent-activity" class="space-y-3">
-                            <!-- Dynamic content -->
-                        </div>
-                    </div>
+                <div onclick="showSection('outgoing')" id="nav-outgoing" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
+                    <i class="fas fa-paper-plane w-5"></i>
+                    <span>الكتب الصادرة</span>
+                </div>
 
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
-                            <i class="fas fa-chart-pie text-green-600"></i>
-                            توزيع الكتب حسب الأولوية
-                        </h3>
-                        <div id="priority-stats" class="space-y-3">
-                            <!-- Dynamic content -->
-                        </div>
+                <div onclick="showSection('incoming')" id="nav-incoming" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
+                    <i class="fas fa-inbox w-5"></i>
+                    <span>الكتب الواردة</span>
+                </div>
+
+                <div onclick="showSection('messaging')" id="nav-messaging" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3 relative">
+                    <i class="fas fa-comments w-5"></i>
+                    <span>التواصل الداخلي</span>
+                    <span id="msg-badge" class="notification-dot hidden"></span>
+                </div>
+
+                <div onclick="showSection('departments')" id="nav-departments" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
+                    <i class="fas fa-building w-5"></i>
+                    <span>الدوائر والأقسام</span>
+                </div>
+
+                <div onclick="showSection('search')" id="nav-search" class="nav-item w-full text-right px-4 py-3 rounded-lg flex items-center gap-3">
+                    <i class="fas fa-search w-5"></i>
+                    <span>البحث والتقارير</span>
+                </div>
+            </nav>
+
+            <div class="p-4 border-t border-green-700">
+                <div class="flex items-center gap-3 px-4 py-2">
+                    <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                        مد
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-semibold text-sm">مدير النظام</p>
+                        <p class="text-xs text-green-200">قسم التصاريح</p>
                     </div>
                 </div>
-            </section>
+            </div>
+        </aside>
 
-            <!-- Outgoing Books Section -->
-            <section id="outgoing-section" class="section-hidden fade-in space-y-6">
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h3 class="font-bold text-xl mb-4">إضافة كتاب صادر جديد</h3>
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
 
-                        <form id="outgoing-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="event.preventDefault(); saveOutgoingBook();">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">رقم الكتاب *</label>
-                                <input type="text" id="out-number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
-                            </div>
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+                <h2 id="page-title" class="text-2xl font-bold text-gray-800">الرئيسية</h2>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الكتاب *</label>
-                                <input type="date" id="out-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الموضوع *</label>
-                                <input type="text" id="out-subject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الجهة المستلمة *</label>
-                                <input type="text" id="out-recipient" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
-                                <select id="out-priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                                    <option value="عادي">عادي</option>
-                                    <option value="عاجل">عاجل</option>
-                                    <option value="سري">سري</option>
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">نص الكتاب</label>
-                                <textarea id="out-content" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">المرفقات (PDF, JPG, PNG)</label>
-                                <div class="file-upload-zone p-6 rounded-lg text-center" onclick="document.getElementById('out-file').click()" ondrop="handleDrop(event, 'out')" ondragover="handleDragOver(event)">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                                    <p class="text-gray-500">اضغط لاختيار الملف أو اسحب الملف هنا</p>
-                                    <input type="file" id="out-file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileSelect(this, 'out')">
-                                    <div id="out-file-info" class="mt-3 hidden">
-                                        <i class="fas fa-file text-green-600 text-2xl mb-1"></i>
-                                        <p id="out-file-name" class="text-sm font-medium text-gray-700"></p>
-                                        <p class="text-xs text-gray-500 mt-1">تم رفع الملف بنجاح</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-2 flex gap-3">
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
-                                    <i class="fas fa-save"></i>
-                                    حفظ الكتاب
-                                </button>
-                                <button type="button" onclick="clearOutgoingForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">
-                                    مسح الحقول
-                                </button>
-                            </div>
-                        </form>
+                <div class="flex items-center gap-4">
+                    <div onclick="showSection('messaging')" class="relative p-2 text-gray-600 hover:text-green-700 transition cursor-pointer">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span id="notif-badge" class="notification-dot hidden"></span>
                     </div>
-
-                    <div class="p-6">
-                        <h3 class="font-bold text-xl mb-4">قائمة الكتب الصادرة</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">#</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">رقم الكتاب</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">التاريخ</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الموضوع</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الجهة</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الأولوية</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرفق</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="outgoing-list" class="divide-y divide-gray-100">
-                                    <!-- Dynamic content -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <div class="text-sm text-gray-500" id="current-date"></div>
                 </div>
-            </section>
+            </header>
 
-            <!-- Incoming Books Section -->
-            <section id="incoming-section" class="section-hidden fade-in space-y-6">
-                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
-                    <div class="p-6 border-b">
-                        <h3 class="font-bold text-xl mb-4">إضافة كتاب وارد جديد</h3>
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-6" id="content-area">
 
-                        <form id="incoming-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="event.preventDefault(); saveIncomingBook();">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">رقم الكتاب *</label>
-                                <input type="text" id="in-number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div class="flex gap-4">
-                                <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الكتاب *</label>
-                                    <input type="date" id="in-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                                </div>
-                                <div class="flex-1">
-                                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستلام *</label>
-                                    <input type="date" id="in-received" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الموضوع *</label>
-                                <input type="text" id="in-subject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الجهة المرسلة *</label>
-                                <input type="text" id="in-sender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
-                                <select id="in-priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                                    <option value="عادي">عادي</option>
-                                    <option value="عاجل">عاجل</option>
-                                    <option value="سري">سري</option>
-                                </select>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">نص الكتاب</label>
-                                <textarea id="in-content" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700 mb-1">المرفقات (PDF, JPG, PNG)</label>
-                                <div class="file-upload-zone p-6 rounded-lg text-center" onclick="document.getElementById('in-file').click()" ondrop="handleDrop(event, 'in')" ondragover="handleDragOver(event)">
-                                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
-                                    <p class="text-gray-500">اضغط لاختيار الملف أو اسحب الملف هنا</p>
-                                    <input type="file" id="in-file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileSelect(this, 'in')">
-                                    <div id="in-file-info" class="mt-3 hidden">
-                                        <i class="fas fa-file text-green-600 text-2xl mb-1"></i>
-                                        <p id="in-file-name" class="text-sm font-medium text-gray-700"></p>
-                                        <p class="text-xs text-gray-500 mt-1">تم رفع الملف بنجاح</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="md:col-span-2 flex gap-3">
-                                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
-                                    <i class="fas fa-save"></i>
-                                    حفظ الكتاب
-                                </button>
-                                <button type="button" onclick="clearIncomingForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">
-                                    مسح الحقول
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <div class="p-6">
-                        <h3 class="font-bold text-xl mb-4">قائمة الكتب الواردة</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">#</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">رقم الكتاب</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">التاريخ</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرسل</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الموضوع</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الأولوية</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرفق</th>
-                                        <th class="px-4 py-3 text-sm font-semibold text-gray-600">الإجراءات</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="incoming-list" class="divide-y divide-gray-100">
-                                    <!-- Dynamic content -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Messaging Section -->
-            <section id="messaging-section" class="section-hidden fade-in h-full">
-                <div class="bg-white rounded-xl shadow-sm h-[calc(100vh-140px)] flex overflow-hidden">
-                    <!-- Contacts Sidebar -->
-                    <div class="w-80 border-l bg-gray-50 flex flex-col">
-                        <div class="p-4 border-b bg-white">
-                            <h3 class="font-bold text-lg mb-3">الدوائر والأقسام</h3>
-                            <div class="relative">
-                                <input type="text" placeholder="بحث عن قسم..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm">
-                                <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto" id="departments-list">
-                            <!-- Departments list -->
-                        </div>
-
-                        <div class="p-4 border-t bg-white">
-                            <button onclick="showNewMessageModal()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
-                                <i class="fas fa-plus"></i>
-                                رسالة جديدة
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Chat Area -->
-                    <div class="flex-1 flex flex-col">
-                        <div id="chat-header" class="p-4 border-b flex items-center justify-between bg-white">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                                    <i class="fas fa-building"></i>
-                                </div>
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="fade-in space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-green-600 cursor-pointer" onclick="showSection('outgoing')">
+                            <div class="flex justify-between items-start">
                                 <div>
-                                    <h4 class="font-bold" id="current-chat-name">اختر دائرة للبدء</h4>
-                                    <p class="text-xs text-gray-500" id="current-chat-status">غير متصل</p>
+                                    <p class="text-gray-500 text-sm">إجمالي الكتب</p>
+                                    <p class="text-3xl font-bold text-gray-800 mt-1" id="total-books">0</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-lg text-green-600">
+                                    <i class="fas fa-folder-open text-xl"></i>
                                 </div>
                             </div>
-                            <div class="flex gap-2">
-                                <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="مكالمة صوتية">
-                                    <i class="fas fa-phone"></i>
-                                </button>
-                                <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="بريد الكتروني">
-                                    <i class="fas fa-envelope"></i>
-                                </button>
-                                <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="معلومات">
-                                    <i class="fas fa-info-circle"></i>
-                                </button>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-blue-600 cursor-pointer" onclick="showSection('outgoing')">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">الصادرة</p>
+                                    <p class="text-3xl font-bold text-gray-800 mt-1" id="total-outgoing">0</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-lg text-blue-600">
+                                    <i class="fas fa-paper-plane text-xl"></i>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                            <div class="text-center text-gray-400 mt-10">
-                                <i class="fas fa-comments text-4xl mb-3"></i>
-                                <p>اختر دائرة من القائمة لبدء المحادثة</p>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-orange-600 cursor-pointer" onclick="showSection('incoming')">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">الواردة</p>
+                                    <p class="text-3xl font-bold text-gray-800 mt-1" id="total-incoming">0</p>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-lg text-orange-600">
+                                    <i class="fas fa-inbox text-xl"></i>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="chat-input-area" class="p-4 border-t bg-white hidden">
-                            <form onsubmit="sendMessage(event)" class="flex gap-2">
-                                <button type="button" class="p-2 text-gray-400 hover:text-gray-600">
-                                    <i class="fas fa-paperclip"></i>
-                                </button>
-                                <input type="text" id="message-input" placeholder="اكتب رسالتك..."
-                                       class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                                    <i class="fas fa-paper-plane"></i>
-                                </button>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-r-4 border-purple-600 cursor-pointer" onclick="showSection('messaging')">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-gray-500 text-sm">الرسائل الجديدة</p>
+                                    <p class="text-3xl font-bold text-gray-800 mt-1" id="total-messages">0</p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-lg text-purple-600">
+                                    <i class="fas fa-envelope text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-clock text-green-600"></i>
+                                آخر النشاطات
+                            </h3>
+                            <div id="recent-activity" class="space-y-3">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl shadow-sm p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i class="fas fa-chart-pie text-green-600"></i>
+                                توزيع الكتب حسب الأولوية
+                            </h3>
+                            <div id="priority-stats" class="space-y-3">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Outgoing Books Section -->
+                <section id="outgoing-section" class="section-hidden fade-in space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b">
+                            <h3 class="font-bold text-xl mb-4">إضافة كتاب صادر جديد</h3>
+
+                            <form id="outgoing-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="event.preventDefault(); saveOutgoingBook();">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">رقم الكتاب *</label>
+                                    <input type="text" id="out-number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الكتاب *</label>
+                                    <input type="date" id="out-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الموضوع *</label>
+                                    <input type="text" id="out-subject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الجهة المستلمة *</label>
+                                    <input type="text" id="out-recipient" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                                    <select id="out-priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                                        <option value="عادي">عادي</option>
+                                        <option value="عاجل">عاجل</option>
+                                        <option value="سري">سري</option>
+                                    </select>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">نص الكتاب</label>
+                                    <textarea id="out-content" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">المرفقات (PDF, JPG, PNG)</label>
+                                    <div class="file-upload-zone p-6 rounded-lg text-center" onclick="document.getElementById('out-file').click()" ondrop="handleDrop(event, 'out')" ondragover="handleDragOver(event)">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                        <p class="text-gray-500">اضغط لاختيار الملف أو اسحب الملف هنا</p>
+                                        <input type="file" id="out-file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileSelect(this, 'out')">
+                                        <div id="out-file-info" class="mt-3 hidden">
+                                            <i class="fas fa-file text-green-600 text-2xl mb-1"></i>
+                                            <p id="out-file-name" class="text-sm font-medium text-gray-700"></p>
+                                            <p class="text-xs text-gray-500 mt-1">تم رفع الملف بنجاح</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="md:col-span-2 flex gap-3">
+                                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                        <i class="fas fa-save"></i>
+                                        حفظ الكتاب
+                                    </button>
+                                    <button type="button" onclick="clearOutgoingForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">
+                                        مسح الحقول
+                                    </button>
+                                </div>
                             </form>
                         </div>
-                    </div>
-                </div>
-            </section>
 
-            <!-- Departments Section -->
-            <section id="departments-section" class="section-hidden fade-in space-y-6">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="font-bold text-xl">دليل دوائر الوزارة</h3>
-                        <button onclick="addDepartment()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
-                            <i class="fas fa-plus ml-2"></i>
-                            إضافة دائرة
+                        <div class="p-6">
+                            <h3 class="font-bold text-xl mb-4">قائمة الكتب الصادرة</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">#</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">رقم الكتاب</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">التاريخ</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الموضوع</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الجهة</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الأولوية</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرفق</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="outgoing-list" class="divide-y divide-gray-100">
+                                        <!-- Dynamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Incoming Books Section -->
+                <section id="incoming-section" class="section-hidden fade-in space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                        <div class="p-6 border-b">
+                            <h3 class="font-bold text-xl mb-4">إضافة كتاب وارد جديد</h3>
+
+                            <form id="incoming-form" class="grid grid-cols-1 md:grid-cols-2 gap-4" onsubmit="event.preventDefault(); saveIncomingBook();">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">رقم الكتاب *</label>
+                                    <input type="text" id="in-number" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div class="flex gap-4">
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الكتاب *</label>
+                                        <input type="date" id="in-date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">تاريخ الاستلام *</label>
+                                        <input type="date" id="in-received" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                    </div>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الموضوع *</label>
+                                    <input type="text" id="in-subject" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الجهة المرسلة *</label>
+                                    <input type="text" id="in-sender" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500" required>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">الأولوية</label>
+                                    <select id="in-priority" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                                        <option value="عادي">عادي</option>
+                                        <option value="عاجل">عاجل</option>
+                                        <option value="سري">سري</option>
+                                    </select>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">نص الكتاب</label>
+                                    <textarea id="in-content" rows="3" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"></textarea>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">المرفقات (PDF, JPG, PNG)</label>
+                                    <div class="file-upload-zone p-6 rounded-lg text-center" onclick="document.getElementById('in-file').click()" ondrop="handleDrop(event, 'in')" ondragover="handleDragOver(event)">
+                                        <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                                        <p class="text-gray-500">اضغط لاختيار الملف أو اسحب الملف هنا</p>
+                                        <input type="file" id="in-file" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="handleFileSelect(this, 'in')">
+                                        <div id="in-file-info" class="mt-3 hidden">
+                                            <i class="fas fa-file text-green-600 text-2xl mb-1"></i>
+                                            <p id="in-file-name" class="text-sm font-medium text-gray-700"></p>
+                                            <p class="text-xs text-gray-500 mt-1">تم رفع الملف بنجاح</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="md:col-span-2 flex gap-3">
+                                    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2">
+                                        <i class="fas fa-save"></i>
+                                        حفظ الكتاب
+                                    </button>
+                                    <button type="button" onclick="clearIncomingForm()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300">
+                                        مسح الحقول
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="p-6">
+                            <h3 class="font-bold text-xl mb-4">قائمة الكتب الواردة</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-right">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">#</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">رقم الكتاب</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">التاريخ</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرسل</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الموضوع</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الأولوية</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">المرفق</th>
+                                            <th class="px-4 py-3 text-sm font-semibold text-gray-600">الحالة</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="incoming-list" class="divide-y divide-gray-100">
+                                        <!-- Dynamic content -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Messaging Section -->
+                <section id="messaging-section" class="section-hidden fade-in h-full">
+                    <div class="bg-white rounded-xl shadow-sm h-full flex overflow-hidden">
+                        <!-- Contacts Sidebar -->
+                        <div class="w-80 border-l bg-gray-50 flex flex-col">
+                            <div class="p-4 border-b bg-white">
+                                <h3 class="font-bold text-lg mb-3">الدوائر والأقسام</h3>
+                                <div class="relative">
+                                    <input type="text" placeholder="بحث عن قسم..." class="w-full pl-10 pr-4 py-2 border rounded-lg text-sm">
+                                    <i class="fas fa-search absolute left-3 top-2.5 text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 overflow-y-auto" id="departments-list">
+                                <!-- Departments list -->
+                            </div>
+
+                            <div class="p-4 border-t bg-white">
+                                <button onclick="showNewMessageModal()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
+                                    <i class="fas fa-plus"></i>
+                                    رسالة جديدة
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chat Area -->
+                        <div class="flex-1 flex flex-col">
+                            <div id="chat-header" class="p-4 border-b flex items-center justify-between bg-white">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold" id="current-chat-name">اختر دائرة للبدء</h4>
+                                        <p class="text-xs text-gray-500" id="current-chat-status">غير متصل</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="مكالمة صوتية">
+                                        <i class="fas fa-phone"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="بريد الكتروني">
+                                        <i class="fas fa-envelope"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="معلومات">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                                <div class="text-center text-gray-400 mt-10">
+                                    <i class="fas fa-comments text-4xl mb-3"></i>
+                                    <p>اختر دائرة من القائمة لبدء المحادثة</p>
+                                </div>
+                            </div>
+
+                            <div id="chat-input-area" class="p-4 border-t bg-white hidden">
+                                <form onsubmit="sendMessage(event)" class="flex gap-2">
+                                    <button type="button" class="p-2 text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <input type="text" id="message-input" placeholder="اكتب رسالتك..."
+                                           class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Departments Section -->
+                <section id="departments-section" class="section-hidden fade-in space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-bold text-xl">دليل دوائر الوزارة</h3>
+                            <button onclick="addDepartment()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                                <i class="fas fa-plus ml-2"></i>
+                                إضافة دائرة
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="departments-grid">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Search Section -->
+                <section id="search-section" class="section-hidden fade-in space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold text-xl mb-4">البحث المتقدم</h3>
+
+                        <div class="flex gap-4 mb-6">
+                            <input type="text" id="search-input" placeholder="ابحث برقم الكتاب، الموضوع، أو الجهة..."
+                                   class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
+                            <button onclick="performSearch()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
+                                <i class="fas fa-search ml-2"></i>
+                                بحث
+                            </button>
+                        </div>
+
+                        <div id="search-results" class="space-y-4">
+                            <!-- Results -->
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold text-xl mb-4">التقارير الإحصائية</h3>
+                        <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-chart-bar ml-2"></i>
+                            إنشاء تقرير شهري
                         </button>
+                        <div id="report-content" class="mt-4 hidden">
+                            <!-- Report content -->
+                        </div>
                     </div>
+                </section>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="departments-grid">
-                        <!-- Dynamic content -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Search Section -->
-            <section id="search-section" class="section-hidden fade-in space-y-6">
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="font-bold text-xl mb-4">البحث المتقدم</h3>
-
-                    <div class="flex gap-4 mb-6">
-                        <input type="text" id="search-input" placeholder="ابحث برقم الكتاب، الموضوع، أو الجهة..."
-                               class="flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500">
-                        <button onclick="performSearch()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                            <i class="fas fa-search ml-2"></i>
-                            بحث
-                        </button>
-                    </div>
-
-                    <div id="search-results" class="space-y-4">
-                        <!-- Results -->
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-sm p-6">
-                    <h3 class="font-bold text-xl mb-4">التقارير الإحصائية</h3>
-                    <button onclick="generateReport()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-                        <i class="fas fa-chart-bar ml-2"></i>
-                        إنشاء تقرير شهري
-                    </button>
-                    <div id="report-content" class="mt-4 hidden">
-                        <!-- Report content -->
-                    </div>
-                </div>
-            </section>
-
-        </div>
-    </main>
+            </div>
+        </main>
+    </div>
 
     <!-- File Preview Modal -->
     <div id="preview-modal" class="preview-modal">
@@ -687,10 +724,14 @@
         </div>
     </div>
 
+    <!-- Import Configuration and API Service -->
+    <script src="config.js"></script>
+    <script src="api-service.js"></script>
+
     <script>
         // Global Variables
-        let currentAttachment = null; // For current form
-        let currentPreviewFile = null; // For preview modal
+        let currentAttachment = null;
+        let currentPreviewFile = null;
         let currentChat = null;
 
         // Database Management
@@ -700,7 +741,6 @@
             }
 
             init() {
-                // Initialize default data if empty
                 if (!localStorage.getItem('outgoing_books')) {
                     localStorage.setItem('outgoing_books', JSON.stringify([]));
                 }
@@ -741,7 +781,7 @@
                 const books = this.getOutgoing();
                 book.id = Date.now();
                 book.created_at = new Date().toISOString();
-                books.unshift(book); // Add to beginning
+                books.unshift(book);
                 localStorage.setItem('outgoing_books', JSON.stringify(books));
                 return book;
             }
@@ -794,44 +834,60 @@
 
         const db = new DatabaseManager();
 
+        // Status Update Functions
+        function updateConnectionStatus() {
+            const status = document.getElementById('connection-status');
+            if (navigator.onLine) {
+                status.innerHTML = '<i class="fas fa-circle status-online"></i><span>متصل</span>';
+            } else {
+                status.innerHTML = '<i class="fas fa-circle status-offline"></i><span>غير متصل</span>';
+            }
+        }
+
+        function updateQueueStatus() {
+            const count = document.getElementById('queue-count');
+            count.textContent = apiService.queue.length;
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Set today's date
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('out-date').value = today;
             document.getElementById('in-date').value = today;
             document.getElementById('in-received').value = today;
 
-            // Set current date display
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             document.getElementById('current-date').textContent = new Date().toLocaleDateString('ar-SA', options);
+
+            updateConnectionStatus();
+            updateQueueStatus();
+
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+
+            setInterval(updateQueueStatus, 2000);
 
             refreshAllData();
         });
 
         // Navigation
         function showSection(section) {
-            // Hide all sections
             document.querySelectorAll('section').forEach(s => {
                 s.classList.add('section-hidden');
                 s.classList.remove('fade-in');
             });
 
-            // Remove active class from all nav items
             document.querySelectorAll('.nav-item').forEach(nav => {
                 nav.classList.remove('active');
             });
 
-            // Show selected section
             const selectedSection = document.getElementById(section + '-section');
             selectedSection.classList.remove('section-hidden');
             selectedSection.classList.add('fade-in');
 
-            // Add active class to nav item
             const navItem = document.getElementById('nav-' + section);
             if (navItem) navItem.classList.add('active');
 
-            // Update title
             const titles = {
                 'dashboard': 'الرئيسية',
                 'outgoing': 'الكتب الصادرة',
@@ -842,7 +898,6 @@
             };
             document.getElementById('page-title').textContent = titles[section];
 
-            // Refresh data based on section
             if (section === 'dashboard') refreshDashboard();
             if (section === 'outgoing') refreshOutgoingList();
             if (section === 'incoming') refreshIncomingList();
@@ -861,7 +916,6 @@
             document.getElementById('total-incoming').textContent = incoming.length;
             document.getElementById('total-messages').textContent = messages.filter(m => !m.read).length;
 
-            // Recent activity
             const allActivity = [
                 ...out.map(b => ({...b, type: 'صادر'})),
                 ...incoming.map(b => ({...b, type: 'وارد'}))
@@ -886,7 +940,6 @@
                 `).join('');
             }
 
-            // Priority stats
             const priorities = {};
             [...out, ...incoming].forEach(b => {
                 priorities[b.priority] = (priorities[b.priority] || 0) + 1;
@@ -911,7 +964,136 @@
             }
         }
 
-        // File Handling Functions
+        // Save Outgoing Book with API Integration
+        async function saveOutgoingBook() {
+            const book = {
+                number: document.getElementById('out-number').value,
+                date: document.getElementById('out-date').value,
+                subject: document.getElementById('out-subject').value,
+                content: document.getElementById('out-content').value,
+                recipient: document.getElementById('out-recipient').value,
+                priority: document.getElementById('out-priority').value,
+                attachment: currentAttachment
+            };
+
+            if (navigator.onLine && typeof apiService !== 'undefined') {
+                const result = await apiService.createOutgoingBook(book);
+                if (result.success) {
+                    alert('✅ تم الحفظ في قاعدة البيانات');
+                    clearOutgoingForm();
+                    refreshOutgoingList();
+                } else {
+                    alert('⚠️ سيتم الحفظ محليًا والمزامنة تلقائيًا');
+                    db.addOutgoing(book);
+                    refreshOutgoingList();
+                }
+            } else {
+                alert('💾 تم الحفظ محليًا - سيتم المزامنة عند الاتصال');
+                db.addOutgoing(book);
+                refreshOutgoingList();
+            }
+        }
+
+        // Save Incoming Book with API Integration
+        async function saveIncomingBook() {
+            const book = {
+                number: document.getElementById('in-number').value,
+                date: document.getElementById('in-date').value,
+                receivedDate: document.getElementById('in-received').value,
+                subject: document.getElementById('in-subject').value,
+                content: document.getElementById('in-content').value,
+                sender: document.getElementById('in-sender').value,
+                priority: document.getElementById('in-priority').value,
+                attachment: currentAttachment
+            };
+
+            if (navigator.onLine && typeof apiService !== 'undefined') {
+                const result = await apiService.createIncomingBook(book);
+                if (result.success) {
+                    alert('✅ تم الحفظ في قاعدة البيانات');
+                    clearIncomingForm();
+                    refreshIncomingList();
+                } else {
+                    alert('⚠️ سيتم الحفظ محليًا والمزامنة تلقائيًا');
+                    db.addIncoming(book);
+                    refreshIncomingList();
+                }
+            } else {
+                alert('💾 تم الحفظ محليًا - سيتم المزامنة عند الاتصال');
+                db.addIncoming(book);
+                refreshIncomingList();
+            }
+        }
+
+        // Refresh Outgoing List
+        function refreshOutgoingList() {
+            const books = db.getOutgoing();
+            const listDiv = document.getElementById('outgoing-list');
+
+            if (books.length === 0) {
+                listDiv.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">لا توجد كتب صادرة</td></tr>';
+                return;
+            }
+
+            listDiv.innerHTML = books.map((book, index) => `
+                <tr>
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3">${book.number}</td>
+                    <td class="px-4 py-3">${new Date(book.date).toLocaleDateString('ar-SA')}</td>
+                    <td class="px-4 py-3">${book.subject}</td>
+                    <td class="px-4 py-3">${book.recipient}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${
+                            book.priority === 'عاجل' ? 'bg-red-100 text-red-600' :
+                            book.priority === 'سري' ? 'bg-yellow-100 text-yellow-600' :
+                            'bg-blue-100 text-blue-600'
+                        }">${book.priority}</span>
+                    </td>
+                    <td class="px-4 py-3">${book.attachment ? '<i class="fas fa-file text-green-600 cursor-pointer" onclick="previewFile(' + book.id + ', \'out\')"></i>' : '-'}</td>
+                    <td class="px-4 py-3">
+                        <button onclick="db.deleteOutgoing(${book.id}); refreshOutgoingList();" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Refresh Incoming List
+        function refreshIncomingList() {
+            const books = db.getIncoming();
+            const listDiv = document.getElementById('incoming-list');
+
+            if (books.length === 0) {
+                listDiv.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-gray-400">لا توجد كتب واردة</td></tr>';
+                return;
+            }
+
+            listDiv.innerHTML = books.map((book, index) => `
+                <tr>
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3">${book.number}</td>
+                    <td class="px-4 py-3">${new Date(book.date).toLocaleDateString('ar-SA')}</td>
+                    <td class="px-4 py-3">${book.sender}</td>
+                    <td class="px-4 py-3">${book.subject}</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs font-semibold ${
+                            book.priority === 'عاجل' ? 'bg-red-100 text-red-600' :
+                            book.priority === 'سري' ? 'bg-yellow-100 text-yellow-600' :
+                            'bg-blue-100 text-blue-600'
+                        }">${book.priority}</span>
+                    </td>
+                    <td class="px-4 py-3">${book.attachment ? '<i class="fas fa-file text-green-600 cursor-pointer" onclick="previewFile(' + book.id + ', \'in\')"></i>' : '-'}</td>
+                    <td class="px-4 py-3">
+                        <button onclick="db.deleteIncoming(${book.id}); refreshIncomingList();" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // File Handling
         function handleDragOver(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -921,7 +1103,6 @@
         function handleDrop(e, type) {
             e.preventDefault();
             e.stopPropagation();
-
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 processFile(files[0], type);
@@ -935,7 +1116,6 @@
         }
 
         function processFile(file, type) {
-            // Check file size (limit to 5MB for localStorage)
             if (file.size > 5 * 1024 * 1024) {
                 alert('حجم الملف كبير جداً. الحد الأقصى 5 ميجابايت');
                 return;
@@ -950,7 +1130,6 @@
                     size: file.size
                 };
 
-                // Update UI
                 const infoDiv = document.getElementById(type + '-file-info');
                 const nameP = document.getElementById(type + '-file-name');
                 infoDiv.classList.remove('hidden');
@@ -959,7 +1138,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Preview Functions
+        // Preview File
         function previewFile(bookId, type) {
             const book = type === 'out'
                 ? db.getOutgoing().find(b => b.id == bookId)
@@ -976,11 +1155,8 @@
             const title = document.getElementById('preview-title');
 
             title.textContent = 'معاينة: ' + book.attachment.name;
-
-            // Clear previous content
             body.innerHTML = '';
 
-            // Check file type
             if (book.attachment.type.includes('image')) {
                 const img = document.createElement('img');
                 img.src = book.attachment.data;
@@ -998,10 +1174,9 @@
                 body.innerHTML = `
                     <div class="text-center p-10">
                         <i class="fas fa-file text-6xl text-gray-400 mb-4"></i>
-                        <p class="text-gray-600">لا يمكن معاينة هذا النوع من الملفات</p>
-                        <button onclick="downloadCurrentFile()" class="mt-4 bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                            <i class="fas fa-download ml-2"></i>
-                            تحميل الملف
+                        <p class="text-gray-600">نوع الملف غير قابل للمعاينة</p>
+                        <button onclick="downloadCurrentFile()" class="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg">
+                            <i class="fas fa-download ml-2"></i>تحميل
                         </button>
                     </div>
                 `;
@@ -1012,182 +1187,23 @@
 
         function closePreview() {
             document.getElementById('preview-modal').style.display = 'none';
-            currentPreviewFile = null;
         }
 
         function downloadCurrentFile() {
             if (!currentPreviewFile) return;
-
             const link = document.createElement('a');
             link.href = currentPreviewFile.data;
             link.download = currentPreviewFile.name;
-            document.body.appendChild(link);
             link.click();
-            document.body.removeChild(link);
         }
 
-        function downloadAttachment(bookId, type) {
-            const book = type === 'out'
-                ? db.getOutgoing().find(b => b.id == bookId)
-                : db.getIncoming().find(b => b.id == bookId);
-
-            if (!book || !book.attachment) {
-                alert('لا يوجد مرفق لهذا الكتاب');
-                return;
-            }
-
-            const link = document.createElement('a');
-            link.href = book.attachment.data;
-            link.download = book.attachment.name;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        // Outgoing Books
-        function saveOutgoingBook() {
-            const book = {
-                number: document.getElementById('out-number').value,
-                date: document.getElementById('out-date').value,
-                subject: document.getElementById('out-subject').value,
-                recipient: document.getElementById('out-recipient').value,
-                content: document.getElementById('out-content').value,
-                priority: document.getElementById('out-priority').value,
-                status: document.getElementById('out-status').value,
-                attachment: currentAttachment
-            };
-
-            if (!book.number || !book.subject || !book.recipient) {
-                alert('الرجاء تعبئة الحقول الإلزامية (رقم الكتاب، الموضوع، الجهة المستلمة)');
-                return;
-            }
-
-            db.addOutgoing(book);
-            alert('تم حفظ الكتاب بنجاح');
-            clearOutgoingForm();
-            refreshOutgoingList();
-            refreshDashboard();
-        }
-
-        function refreshOutgoingList() {
-            const books = db.getOutgoing();
-            const tbody = document.getElementById('outgoing-list');
-
-            if (books.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">لا توجد كتب صادرة</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = books.map(book => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm">${book.id.toString().slice(-4)}</td>
-                    <td class="px-4 py-3 font-medium">${book.number}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">${book.date}</td>
-                    <td class="px-4 py-3 text-sm">${book.subject}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">${book.recipient}</td>
-                    <td class="px-4 py-3">
-                        <span class="status-badge priority-${book.priority === 'عاجل' ? 'urgent' : book.priority === 'سري' ? 'secret' : 'normal'}">${book.priority}</span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${book.attachment ? `
-                            <i class="fas fa-file-pdf attachment-icon text-lg" onclick="previewFile(${book.id}, 'out')" title="معاينة الملف: ${book.attachment.name}"></i>
-                        ` : '<span class="text-gray-300">-</span>'}
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex gap-2">
-                            ${book.attachment ? `
-                                <button onclick="downloadAttachment(${book.id}, 'out')" class="text-blue-600 hover:text-blue-800" title="تحميل">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            ` : ''}
-                            <button onclick="deleteOutgoing(${book.id})" class="text-red-600 hover:text-red-800" title="حذف">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
+        // Clear Forms
         function clearOutgoingForm() {
             document.getElementById('outgoing-form').reset();
-            document.getElementById('out-date').value = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('out-date').value = today;
             document.getElementById('out-file-info').classList.add('hidden');
             currentAttachment = null;
-        }
-
-        function deleteOutgoing(id) {
-            if (confirm('هل أنت متأكد من حذف هذا الكتاب؟')) {
-                db.deleteOutgoing(id);
-                refreshOutgoingList();
-                refreshDashboard();
-            }
-        }
-
-        // Incoming Books
-        function saveIncomingBook() {
-            const book = {
-                number: document.getElementById('in-number').value,
-                date: document.getElementById('in-date').value,
-                received_date: document.getElementById('in-received').value,
-                subject: document.getElementById('in-subject').value,
-                sender: document.getElementById('in-sender').value,
-                content: document.getElementById('in-content').value,
-                priority: document.getElementById('in-priority').value,
-                status: 'جديد',
-                attachment: currentAttachment
-            };
-
-            if (!book.number || !book.subject || !book.sender) {
-                alert('الرجاء تعبئة الحقول الإلزامية');
-                return;
-            }
-
-            db.addIncoming(book);
-            alert('تم حفظ الكتاب بنجاح');
-            clearIncomingForm();
-            refreshIncomingList();
-            refreshDashboard();
-        }
-
-        function refreshIncomingList() {
-            const books = db.getIncoming();
-            const tbody = document.getElementById('incoming-list');
-
-            if (books.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-8 text-gray-500">لا توجد كتب واردة</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = books.map(book => `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm">${book.id.toString().slice(-4)}</td>
-                    <td class="px-4 py-3 font-medium">${book.number}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600">${book.date}</td>
-                    <td class="px-4 py-3 text-sm">${book.sender}</td>
-                    <td class="px-4 py-3 text-sm">${book.subject}</td>
-                    <td class="px-4 py-3">
-                        <span class="status-badge priority-${book.priority === 'عاجل' ? 'urgent' : book.priority === 'سري' ? 'secret' : 'normal'}">${book.priority}</span>
-                    </td>
-                    <td class="px-4 py-3 text-center">
-                        ${book.attachment ? `
-                            <i class="fas fa-file-pdf attachment-icon text-lg" onclick="previewFile(${book.id}, 'in')" title="معاينة الملف: ${book.attachment.name}"></i>
-                        ` : '<span class="text-gray-300">-</span>'}
-                    </td>
-                    <td class="px-4 py-3">
-                        <div class="flex gap-2">
-                            ${book.attachment ? `
-                                <button onclick="downloadAttachment(${book.id}, 'in')" class="text-blue-600 hover:text-blue-800" title="تحميل">
-                                    <i class="fas fa-download"></i>
-                                </button>
-                            ` : ''}
-                            <button onclick="deleteIncoming(${book.id})" class="text-red-600 hover:text-red-800" title="حذف">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         function clearIncomingForm() {
@@ -1199,308 +1215,157 @@
             currentAttachment = null;
         }
 
-        function deleteIncoming(id) {
-            if (confirm('هل أنت متأكد من حذف هذا الكتاب؟')) {
-                db.deleteIncoming(id);
-                refreshIncomingList();
-                refreshDashboard();
-            }
-        }
-
-        // Messaging System (Same as before but fixed)
+        // Departments
         function loadDepartments() {
             const depts = db.getDepartments();
-            const container = document.getElementById('departments-list');
-            container.innerHTML = depts.map(dept => `
-                <div onclick="openChat(${dept.id})" class="p-4 border-b hover:bg-gray-100 cursor-pointer flex items-center gap-3 ${currentChat === dept.id ? 'bg-green-50 border-r-4 border-r-green-600' : ''}">
-                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                        <span class="font-bold text-sm">${dept.name.charAt(0)}</span>
-                    </div>
-                    <div class="flex-1">
-                        <h4 class="font-semibold text-sm">${dept.name}</h4>
-                        <p class="text-xs text-gray-500">${dept.email}</p>
+            const deptsList = document.getElementById('departments-list');
+            deptsList.innerHTML = depts.map(dept => `
+                <div class="p-3 border-b hover:bg-gray-100 cursor-pointer" onclick="selectDepartment('${dept.name}')">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-building text-green-600"></i>
+                        <div>
+                            <p class="font-semibold text-sm">${dept.name}</p>
+                            <p class="text-xs text-gray-500">${dept.head}</p>
+                        </div>
                     </div>
                 </div>
             `).join('');
-
-            const select = document.getElementById('msg-recipient');
-            select.innerHTML = depts.map(dept => `<option value="${dept.id}">${dept.name}</option>`).join('');
         }
 
         function loadDepartmentsGrid() {
             const depts = db.getDepartments();
             const grid = document.getElementById('departments-grid');
             grid.innerHTML = depts.map(dept => `
-                <div class="border rounded-lg p-4 hover:shadow-md transition bg-white">
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg border border-green-200">
                     <div class="flex items-center gap-3 mb-3">
-                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-bold">${dept.name}</h4>
-                            <p class="text-sm text-gray-500">المدير: ${dept.head}</p>
-                        </div>
+                        <i class="fas fa-building text-green-600 text-2xl"></i>
+                        <h4 class="font-bold text-sm">${dept.name}</h4>
                     </div>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex items-center gap-2 text-gray-600">
-                            <i class="fas fa-envelope w-4"></i>
-                            <span>${dept.email}</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-gray-600">
-                            <i class="fas fa-phone w-4"></i>
-                            <span>تحويلة: ${dept.phone}</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex gap-2">
-                        <button onclick="openChat(${dept.id}); showSection('messaging');" class="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700">
-                            <i class="fas fa-comment ml-1"></i>
-                            مراسلة
-                        </button>
-                        <a href="mailto:${dept.email}" class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg text-center text-sm hover:bg-gray-200">
-                            <i class="fas fa-envelope ml-1"></i>
-                            إيميل
-                        </a>
-                    </div>
+                    <p class="text-xs text-gray-600 mb-2"><strong>المدير:</strong> ${dept.head}</p>
+                    <p class="text-xs text-gray-600 mb-2"><strong>البريد:</strong> ${dept.email}</p>
+                    <p class="text-xs text-gray-600"><strong>الهاتف:</strong> ${dept.phone}</p>
                 </div>
             `).join('');
         }
 
-        function openChat(deptId) {
-            currentChat = deptId;
-            const depts = db.getDepartments();
-            const dept = depts.find(d => d.id === deptId);
-
-            document.getElementById('current-chat-name').textContent = dept.name;
-            document.getElementById('current-chat-status').textContent = 'متصل الآن';
-            document.getElementById('current-chat-status').className = 'text-xs text-green-600';
-
+        function selectDepartment(name) {
+            document.getElementById('current-chat-name').textContent = name;
+            document.getElementById('current-chat-status').textContent = 'متصل';
             document.getElementById('chat-input-area').classList.remove('hidden');
-            loadMessages(deptId);
-            loadDepartments();
-        }
-
-        function loadMessages(deptId) {
-            const messages = db.getMessages().filter(m =>
-                (m.from === deptId && m.to === 0) || (m.from === 0 && m.to === deptId)
-            );
-
-            const container = document.getElementById('chat-messages');
-
-            if (messages.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center text-gray-400 mt-10">
-                        <i class="fas fa-comments text-4xl mb-3"></i>
-                        <p>لا توجد رسائل سابقة</p>
-                        <p class="text-sm">ابدأ المحادثة الآن</p>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = messages.map(msg => `
-                <div class="message-bubble ${msg.from === 0 ? 'message-sent' : 'message-received'}">
-                    <p>${msg.body}</p>
-                    <div class="text-xs mt-1 ${msg.from === 0 ? 'text-green-200' : 'text-gray-500'}">
-                        ${new Date(msg.timestamp).toLocaleTimeString('ar-SA', {hour: '2-digit', minute:'2-digit'})}
-                        ${msg.from === 0 ? '<i class="fas fa-check-double ml-1"></i>' : ''}
-                    </div>
-                </div>
-            `).join('');
-
-            container.scrollTop = container.scrollHeight;
-        }
-
-        function sendMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('message-input');
-            const body = input.value.trim();
-
-            if (!body || !currentChat) return;
-
-            const msg = {
-                from: 0,
-                to: currentChat,
-                subject: 'رسالة سريعة',
-                body: body
-            };
-
-            db.addMessage(msg);
-            input.value = '';
-            loadMessages(currentChat);
         }
 
         function showNewMessageModal() {
-            const modal = document.getElementById('new-message-modal');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            document.getElementById('new-message-modal').classList.remove('hidden');
         }
 
         function closeNewMessageModal() {
-            const modal = document.getElementById('new-message-modal');
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+            document.getElementById('new-message-modal').classList.add('hidden');
+        }
+
+        function sendMessage(e) {
+            e.preventDefault();
+            const message = document.getElementById('message-input').value;
+            if (message.trim()) {
+                const msg = {
+                    department: document.getElementById('current-chat-name').textContent,
+                    message: message,
+                    sender: 'me'
+                };
+                db.addMessage(msg);
+                document.getElementById('message-input').value = '';
+            }
         }
 
         function sendNewMessage() {
-            const msg = {
-                from: 0,
-                to: parseInt(document.getElementById('msg-recipient').value),
-                subject: document.getElementById('msg-subject').value,
-                body: document.getElementById('msg-body').value
-            };
+            const recipient = document.getElementById('msg-recipient').value;
+            const subject = document.getElementById('msg-subject').value;
+            const body = document.getElementById('msg-body').value;
 
-            if (!msg.body) {
-                alert('الرجاء كتابة نص الرسالة');
+            if (recipient && subject && body) {
+                const msg = {
+                    recipient: recipient,
+                    subject: subject,
+                    body: body,
+                    sender: 'me'
+                };
+                db.addMessage(msg);
+                closeNewMessageModal();
+                document.getElementById('new-message-modal').querySelectorAll('input, textarea').forEach(el => el.value = '');
+            }
+        }
+
+        // Search and Reports
+        function performSearch() {
+            const keyword = document.getElementById('search-input').value;
+            if (!keyword.trim()) {
+                alert('الرجاء إدخال كلمة البحث');
                 return;
             }
 
-            db.addMessage(msg);
-            closeNewMessageModal();
-            document.getElementById('msg-subject').value = '';
-            document.getElementById('msg-body').value = '';
-
-            if (currentChat === msg.to) {
-                loadMessages(currentChat);
-            }
-            alert('تم إرسال الرسالة بنجاح');
-        }
-
-        // Search
-        function performSearch() {
-            const keyword = document.getElementById('search-input').value;
-            if (!keyword) return;
-
             const results = db.search(keyword);
-            const container = document.getElementById('search-results');
+            const resultsDiv = document.getElementById('search-results');
+
+            if (results.out.length === 0 && results.incoming.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-gray-400 text-center">لا توجد نتائج</p>';
+                return;
+            }
 
             let html = '';
-
             if (results.out.length > 0) {
-                html += `<h4 class="font-bold mb-2">نتائج الصادر (${results.out.length})</h4><div class="space-y-2 mb-4">`;
-                html += results.out.map(book => `
-                    <div class="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">${book.subject}</p>
-                            <p class="text-sm text-gray-500">${book.number} - ${book.recipient}</p>
-                        </div>
-                        <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">صادر</span>
+                html += '<h4 class="font-bold mb-2">الكتب الصادرة:</h4>';
+                html += results.out.map(b => `
+                    <div class="p-3 bg-gray-50 rounded-lg mb-2">
+                        <p class="font-semibold text-sm">${b.subject}</p>
+                        <p class="text-xs text-gray-600">رقم: ${b.number} - الجهة: ${b.recipient}</p>
                     </div>
                 `).join('');
-                html += '</div>';
             }
 
             if (results.incoming.length > 0) {
-                html += `<h4 class="font-bold mb-2">نتائج الوارد (${results.incoming.length})</h4><div class="space-y-2">`;
-                html += results.incoming.map(book => `
-                    <div class="p-3 bg-gray-50 rounded-lg flex justify-between items-center">
-                        <div>
-                            <p class="font-medium">${book.subject}</p>
-                            <p class="text-sm text-gray-500">${book.number} - ${book.sender}</p>
-                        </div>
-                        <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">وارد</span>
+                html += '<h4 class="font-bold mb-2 mt-4">الكتب الواردة:</h4>';
+                html += results.incoming.map(b => `
+                    <div class="p-3 bg-gray-50 rounded-lg mb-2">
+                        <p class="font-semibold text-sm">${b.subject}</p>
+                        <p class="text-xs text-gray-600">رقم: ${b.number} - المرسل: ${b.sender}</p>
                     </div>
                 `).join('');
-                html += '</div>';
             }
 
-            if (results.out.length === 0 && results.incoming.length === 0) {
-                html = '<p class="text-center text-gray-500 py-8">لا توجد نتائج للبحث</p>';
-            }
-
-            container.innerHTML = html;
+            resultsDiv.innerHTML = html;
         }
 
-        // Report
         function generateReport() {
-            const out = db.getOutgoing();
+            const outgoing = db.getOutgoing();
             const incoming = db.getIncoming();
-            const total = out.length + incoming.length;
 
-            const reportDiv = document.getElementById('report-content');
-            reportDiv.classList.remove('hidden');
-
-            reportDiv.innerHTML = `
-                <div class="bg-gray-50 p-6 rounded-lg border-2 border-gray-200 mt-4">
-                    <h4 class="font-bold text-xl mb-4 text-center">التقرير الإحصائي للكتب الرسمية</h4>
-                    <p class="text-center text-gray-600 mb-6">تاريخ التقرير: ${new Date().toLocaleDateString('ar-SA')}</p>
-
-                    <div class="grid grid-cols-2 gap-4 mb-6">
-                        <div class="bg-white p-4 rounded-lg text-center">
-                            <p class="text-2xl font-bold text-blue-600">${out.length}</p>
-                            <p class="text-gray-600">الكتب الصادرة</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-lg text-center">
-                            <p class="text-2xl font-bold text-orange-600">${incoming.length}</p>
-                            <p class="text-gray-600">الكتب الواردة</p>
-                        </div>
+            const report = `
+                <h4 class="font-bold mb-3">تقرير شهري</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-blue-50 rounded">
+                        <p class="text-gray-600 text-sm">إجمالي الكتب الصادرة</p>
+                        <p class="text-2xl font-bold text-blue-600">${outgoing.length}</p>
                     </div>
-
-                    <table class="w-full border-collapse border border-gray-300 bg-white">
-                        <thead>
-                            <tr class="bg-gray-100">
-                                <th class="border p-2">النوع</th>
-                                <th class="border p-2">العدد</th>
-                                <th class="border p-2">النسبة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td class="border p-2">الصادرة</td>
-                                <td class="border p-2 text-center">${out.length}</td>
-                                <td class="border p-2 text-center">${total ? ((out.length / total) * 100).toFixed(1) : 0}%</td>
-                            </tr>
-                            <tr>
-                                <td class="border p-2">الواردة</td>
-                                <td class="border p-2 text-center">${incoming.length}</td>
-                                <td class="border p-2 text-center">${total ? ((incoming.length / total) * 100).toFixed(1) : 0}%</td>
-                            </tr>
-                            <tr class="bg-gray-100 font-bold">
-                                <td class="border p-2">الإجمالي</td>
-                                <td class="border p-2 text-center">${total}</td>
-                                <td class="border p-2 text-center">100%</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
-                    <div class="mt-6 flex justify-center">
-                        <button onclick="window.print()" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700">
-                            <i class="fas fa-print ml-2"></i>
-                            طباعة التقرير
-                        </button>
+                    <div class="p-4 bg-orange-50 rounded">
+                        <p class="text-gray-600 text-sm">إجمالي الكتب الواردة</p>
+                        <p class="text-2xl font-bold text-orange-600">${incoming.length}</p>
                     </div>
                 </div>
             `;
+
+            const reportDiv = document.getElementById('report-content');
+            reportDiv.innerHTML = report;
+            reportDiv.classList.remove('hidden');
         }
 
         function addDepartment() {
-            const name = prompt('اسم الدائرة:');
-            if (name) {
-                const depts = db.getDepartments();
-                depts.push({
-                    id: Date.now(),
-                    name: name,
-                    email: 'dept@mosyr.gov',
-                    phone: '0000',
-                    head: 'غير محدد'
-                });
-                localStorage.setItem('departments', JSON.stringify(depts));
-                loadDepartments();
-                loadDepartmentsGrid();
-            }
+            alert('هذه الميزة قيد التطوير');
         }
 
         function refreshAllData() {
             refreshDashboard();
             refreshOutgoingList();
             refreshIncomingList();
-        }
-
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            const modal = document.getElementById('preview-modal');
-            if (event.target === modal) {
-                closePreview();
-            }
+            loadDepartments();
         }
     </script>
 </body>
